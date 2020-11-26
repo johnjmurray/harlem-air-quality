@@ -32,3 +32,4 @@ while True:
     concentration = 1.1*percentage**3-3.8*percentage**2+520*percentage+0.62 # equation from test results
     print('Sample Time: %0.2f, Concentration: %0.2f pcs/283mL'%(sampleTime,concentration))
 
+if time.gmtime(time.time()).tm_min:
