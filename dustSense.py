@@ -11,7 +11,7 @@ dustPin = 2
 GPIO.setup(dustPin, GPIO.IN)
 
 plotUpdateMins = 5 # mins
-minSampleWindow = 1 # 60 seconds sample time, minimum
+minSampleWindow = 60 # 60 seconds sample time, minimum
 timestampVector = []
 datetimeVector = []
 concVector = []
