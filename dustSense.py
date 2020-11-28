@@ -10,7 +10,7 @@ GPIO.setmode(GPIO.BCM) # use Broadcom chip numbering scheme
 dustPin = 2
 GPIO.setup(dustPin, GPIO.IN)
 
-plotUpdateMins = 5 # mins
+plotUpdateMins = 10 # mins
 minSampleWindow = 60 # 60 seconds sample time, minimum
 timestampVector = []
 datetimeVector = []
@@ -45,20 +45,20 @@ while True:
     timestampVector.append(time.time())
     datetimeVector.append(dateTime)
     concVector.append(concentration)
-    print(concVector)
     if entryCounter == plotUpdateMins: # update webpage ~every hour
         entryCounter = 0
         
         # 24 hr plot
         N = 24
-        if len(timestampVector) < 60*24:            
+        if len(timestampVector) <= 60*24:            
             #xLabelVec = np.linspace(timestampVector[0],timestampVector[-1],N)
             fig, ax = plt.subplots()
             #ax.axis([timestampVector[0],timestampVector[-1],0,10000])
             ax.scatter(timestampVector,concVector)
         else:
             xLabelVec = np.linspace(timestampVector[-60*24],timestampVector[-1],N)
-            fig, ax = plt.scatter(timestampVector[-60*24:],concVector[-60*24:])
+            fig, ax = plt.subplots()
+            ax.scatter(timestampVector[-60*24:],concVector[-60*24:])
             ax.axis([timestampVector[-60*24],timestampVector[-1],0,10000])
         #ax.set_xticks(range(N))
         #ax.set_xticklabels([time.gmtime(t).tm_hour for t in xLabelVec])
