@@ -2,13 +2,13 @@
 
 Saves data to a file with this format...
 
-timestamp,detectedDuration,sampleDuration,concentration
+timestamp,particlesDetectedDuration,sampleDuration,concentration
 11000,15,30,129
 11030,5,30,100
 
 Descriptions of columns:
   - time: Unix (epoch) timestamps. This corresponds to the START of the sample.
-  - detectedDuration: duration during sampleDuration that particles were detected.
+  - particlesDetectedDuration: duration during sampleDuration that particles were detected.
   - sampleDuration: duration of this sample.
   - concentration: output of highly complex algorithm that transforms the durations to
       a concentration.
@@ -19,6 +19,7 @@ from pathlib import Path
 import subprocess
 import threading
 import time
+from typing import NamedTuple
 
 import RPi.GPIO as GPIO
 
@@ -29,7 +30,25 @@ DATA_FILEPATH = Path("data.csv")
 DATA_COMMIT_AND_PUSH_INTERVAL = 10 * 60  # seconds
 
 
-def getOneSample(duration):
+class Sample(NamedTuple):
+    """This object represents one sample of data.
+
+    Properties
+    ----------
+    particlesDetectedDuration : float
+        Duration (s) during sampleDuration that particles were detected.
+    sampleDuration : float
+        Duration (s) of this sample.
+    sampleStart : float
+        Unix timestamp of the beginning of this sample.
+    """
+
+    particlesDetectedDuration: float
+    sampleDuration: float
+    sampleStart: float
+
+
+def getOneSample(duration: float) -> Sample:
     """Detect particles over `duration` seconds.
 
     Parameters
@@ -39,11 +58,7 @@ def getOneSample(duration):
 
     Returns
     -------
-    Tuple with three float values. The first value is the duration in seconds
-    during which particles were detected. The second value is the total sample
-    duration. The sample duration is returned because we cannot guarantee that
-    each sample will be exactly `duration` seconds long (or can we?). The third
-    value is the Unix timestamp of the start of the sample.
+    Instance of `Sample`.
     """
     particlesDetectedDuration = 0
     sampleStart = time.time()
@@ -58,31 +73,39 @@ def getOneSample(duration):
         particlesDetectedDuration += pulseStop - pulseStart
 
     sampleDuration = time.time() - sampleStart
-    return particlesDetectedDuration, sampleDuration, sampleStart
+    return Sample(
+        sampleDuration=sampleDuration,
+        particlesDetectedDuration=particlesDetectedDuration,
+        sampleStart=sampleStart,
+    )
 
 
-def getConcentration(x):
-    """Get concentration from percetage using equation from test results."""
+def getConcentration(x: float) -> float:
+    """Get concentration from percentage using equation from test results."""
     return (1.1 * x ** 3) - (3.8 * x ** 2) + (520 * x) + 0.62
 
 
-def commitAndPushData():
+def commitAndPushData(period: float) -> None:
     """Commit and push spreadsheet periodically.
 
     This function is meant to be run in a separate thread to avoid interfering with
     data collection.
+
+    Parameters
+    ----------
+    period : float
+        Time in seconds between subsequent runs.
     """
     # https://stackoverflow.com/a/25251804/5666087
     startTime = time.time()
-    interval = DATA_COMMIT_AND_PUSH_INTERVAL
     while True:
-        time.sleep(interval - ((time.time() - startTime) % interval))
-        subprocess.run(["git", "add", str(DATA_FILEPATH))
+        time.sleep(period - ((time.time() - startTime) % period))
+        subprocess.run(["git", "add", str(DATA_FILEPATH)])
         subprocess.run(["git", "commit", "-m", "added rows"])
         subprocess.run(["git", "push"])
 
 
-def main():
+def main() -> None:
     GPIO.setmode(GPIO.BCM)  # Use Broadcom chip numbering scheme.
     GPIO.setup(DUSTPIN_INPUT, GPIO.IN)
 
@@ -90,24 +113,29 @@ def main():
     if not DATA_FILEPATH.exists():
         DATA_FILEPATH.parent.mkdir(parents=True, exist_ok=True)
         DATA_FILEPATH.write_text(
-            "timestamp,detectedDuration,sampleDuration,concentration"
+            "timestamp,particlesDetectedDuration,sampleDuration,concentration"
         )
 
     # Run the data uploading pieces in a separate thread.
-    dataUploadThread = threading.Thread(target=commitAndPushData, daemon=True)
+
+    dataUploadThread = threading.Thread(
+        target=commitAndPushData,
+        kwargs={"period": DATA_COMMIT_AND_PUSH_INTERVAL},
+        daemon=True,
+    )
     dataUploadThread.start()
 
     while True:
-        particlesDetectedDuration, sampleDuration, sampleStart = getOneSample(SAMPLE_DURATION)
-        percentage = 100 * particlesDetectedDuration / sampleDuration
+        sample = getOneSample(duration=SAMPLE_DURATION)
+        percentage = 100 * sample.particlesDetectedDuration / sample.sampleDuration
         concentration = getConcentration(percentage)
 
         # Save sample to file.
-        row = f"{sampleStart},{particlesDetectedDuration},{sampleDuration},{concentration}"
+        row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}"
         with DATA_FILEPATH.open("a") as f:
             f.write(row)
 
-        msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {sampleDuration:0.2f} s"
+        msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {sample.sampleDuration:0.2f} s"
         print(msg)
 
 
