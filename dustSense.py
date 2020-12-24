@@ -113,7 +113,7 @@ def main() -> None:
     if not DATA_FILEPATH.exists():
         DATA_FILEPATH.parent.mkdir(parents=True, exist_ok=True)
         DATA_FILEPATH.write_text(
-            "timestamp,particlesDetectedDuration,sampleDuration,concentration"
+            "timestamp,particlesDetectedDuration,sampleDuration,concentration\n"
         )
 
     # Run the data uploading pieces in a separate thread.
@@ -131,7 +131,7 @@ def main() -> None:
         concentration = getConcentration(percentage)
 
         # Save sample to file.
-        row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}"
+        row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}\n"
         with DATA_FILEPATH.open("a") as f:
             f.write(row)
 
