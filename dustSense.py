@@ -117,7 +117,6 @@ def main() -> None:
         )
 
     # Run the data uploading pieces in a separate thread.
-
     dataUploadThread = threading.Thread(
         target=commitAndPushData,
         kwargs={"period": DATA_COMMIT_AND_PUSH_INTERVAL},
