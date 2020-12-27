@@ -20,8 +20,10 @@ import subprocess
 import threading
 import time
 from typing import NamedTuple
-
 import RPi.GPIO as GPIO
+import queue
+
+
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
@@ -29,7 +31,43 @@ SAMPLE_DURATION = 30  # seconds
 DATA_FILEPATH = Path("data.csv")
 DATA_COMMIT_AND_PUSH_INTERVAL = 10 * 60  # seconds
 
+logging.basicConfig(level=logging.DEBUG,format='(%(threadName)-9s) %(message)s',)
 
+BUF_SIZE = 0 # infinite queue size
+q = Queue.Queue(BUF_SIZE)
+
+class Producer(threading.Thread):
+    def run(self):
+        while True:
+            sample = (time.time(), GPIO.input(DUSTPIN_INPUT))
+            q.put(sample)
+            
+class Consumer(threading.Thread):
+    def run(self):
+      startOfEpoch = True
+      epochDuration = 0
+
+      while True:
+          timestamp, value = q.get(block=False)  # block=False for debugging only
+          if startOfEpoch:
+              t0 = timestamp
+              startOfEpoch = False
+              pulseDuration = 0
+
+          if value == 0:
+              pulseStart = timestamp
+              isLow = True
+              while isLow:
+                  pulseStop, value = q.get(block=False)
+                  if value != 0:
+                      isLow = False
+              pulseDuration += pulseStop - pulseStart
+
+          epochDuration = timestamp - t0
+          if epochDuration > 30:
+              startOfEpoch = True
+              print(f"{pulseDuration}\t{epochDuration}")
+              
 class Sample(NamedTuple):
     """This object represents one sample of data.
 
@@ -106,6 +144,13 @@ def commitAndPushData(period: float) -> None:
 
 
 def main() -> None:
+  p = ProducerThread(name='producer')
+    c = ConsumerThread(name='consumer')
+
+    p.start()
+    time.sleep(2)
+    c.start()
+    time.sleep(2)
     GPIO.setmode(GPIO.BCM)  # Use Broadcom chip numbering scheme.
     GPIO.setup(DUSTPIN_INPUT, GPIO.IN)
 
