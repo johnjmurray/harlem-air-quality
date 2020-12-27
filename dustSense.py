@@ -36,19 +36,22 @@ logging.basicConfig(level=logging.DEBUG,format='(%(threadName)-9s) %(message)s',
 BUF_SIZE = 0 # infinite queue size
 q = Queue.Queue(BUF_SIZE)
 
-class Producer(threading.Thread):
+class ProducerThread(threading.Thread):
     def run(self):
+        GPIO.setmode(GPIO.BCM)  # Use Broadcom chip numbering scheme.
+        GPIO.setup(DUSTPIN_INPUT, GPIO.IN)
         while True:
             sample = (time.time(), GPIO.input(DUSTPIN_INPUT))
             q.put(sample)
             
-class Consumer(threading.Thread):
+class ConsumerThread(threading.Thread):
     def run(self):
       startOfEpoch = True
       epochDuration = 0
 
       while True:
           timestamp, value = q.get(block=False)  # block=False for debugging only
+          
           if startOfEpoch:
               t0 = timestamp
               startOfEpoch = False
@@ -64,10 +67,19 @@ class Consumer(threading.Thread):
               pulseDuration += pulseStop - pulseStart
 
           epochDuration = timestamp - t0
+          
           if epochDuration > 30:
               startOfEpoch = True
-              print(f"{pulseDuration}\t{epochDuration}")
-              
+              pulseRatio = pulseDuration/epochDuration
+              concentration = getConcentration(pulseRatio)
+              # Save sample to file.
+          row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}\n"
+          with DATA_FILEPATH.open("a") as f:
+            f.write(row)
+          msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {sample.sampleDuration:0.2f} s"
+          print(msg)
+          
+          
 class Sample(NamedTuple):
     """This object represents one sample of data.
 
@@ -119,7 +131,7 @@ def getOneSample(duration: float) -> Sample:
 
 
 def getConcentration(x: float) -> float:
-    """Get concentration from percentage using equation from test results."""
+    """Get concentration from ratio using equation from test results."""
     return (1.1 * x ** 3) - (3.8 * x ** 2) + (520 * x) + 0.62
 
 
@@ -144,15 +156,9 @@ def commitAndPushData(period: float) -> None:
 
 
 def main() -> None:
-  p = ProducerThread(name='producer')
-    c = ConsumerThread(name='consumer')
 
-    p.start()
-    time.sleep(2)
-    c.start()
-    time.sleep(2)
-    GPIO.setmode(GPIO.BCM)  # Use Broadcom chip numbering scheme.
-    GPIO.setup(DUSTPIN_INPUT, GPIO.IN)
+    
+    
 
     # If the file does not exist, create it and write column names.
     if not DATA_FILEPATH.exists():
@@ -160,7 +166,15 @@ def main() -> None:
         DATA_FILEPATH.write_text(
             "timestamp,particlesDetectedDuration,sampleDuration,concentration\n"
         )
+        
+    p = ProducerThread(name='producer')
+    c = ConsumerThread(name='consumer')
 
+    p.start()
+    time.sleep(2)
+    c.start()
+    time.sleep(2)
+    
     # Run the data uploading pieces in a separate thread.
     dataUploadThread = threading.Thread(
         target=commitAndPushData,
@@ -168,19 +182,6 @@ def main() -> None:
         daemon=True,
     )
     dataUploadThread.start()
-
-    while True:
-        sample = getOneSample(duration=SAMPLE_DURATION)
-        percentage = 100 * sample.particlesDetectedDuration / sample.sampleDuration
-        concentration = getConcentration(percentage)
-
-        # Save sample to file.
-        row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}\n"
-        with DATA_FILEPATH.open("a") as f:
-            f.write(row)
-
-        msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {sample.sampleDuration:0.2f} s"
-        print(msg)
 
 
 if __name__ == "__main__":
