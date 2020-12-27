@@ -15,51 +15,63 @@
 
   <body>
     <div class="container">
-      <div id="my_dataviz"></div>
+      <div id="plot"></div>
     </div>
 
-    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
     <script>
       // With help from
-      //   - https://www.d3-graph-gallery.com/graph/scatter_basic.html
+      //   - https://observablehq.com/@d3/scatterplot
       //   - https://gramener.github.io/d3js-playbook/scatter.html
 
       // set the dimensions and margins of the graph
-      const margin = { top: 10, right: 30, bottom: 30, left: 60 },
-        width = 460 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom,
-        // https://stackoverflow.com/a/20645375/5666087
-        timeFormat = d3.timeFormat("%I:%M %p %a %Y");
+      const margin = { top: 25, right: 20, bottom: 35, left: 50 },
+        height = 600,
+        width = 954;
 
       // append the svg object to the body of the page
       const svg = d3
-        .select("#my_dataviz")
+        .select("#plot")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-      // Read the data
-      d3.csv("data.csv", (data) => {
-        // Add X axis
-        const x = d3
+      // See https://github.com/d3/d3-fetch#csv
+      d3.csv("data.csv", (row) => {
+        // Keep only x and y values.
+        return {
+          // https://stackoverflow.com/a/8016205
+          timestamp: new Date(row.timestamp * 1000),
+          concentration: +row.concentration,
+        };
+      }).then((data) => {
+        // Create x scale.
+        x = d3
           .scaleTime()
           .domain(d3.extent(data, (d) => d.timestamp))
-          .range([0, width]);
-        svg
-          .append("g")
-          .attr("transform", "translate(0," + height + ")")
-          .call(d3.axisBottom(x));
+          .range([margin.left, width - margin.right])
+          .nice();
 
-        // Add Y axis
-        const y = d3
+        // Create y scale.
+        y = d3
           .scaleLinear()
           .domain(d3.extent(data, (d) => d.concentration))
-          .range([height, 0]);
+          .range([height - margin.bottom, margin.top])
+          .nice();
+
+        // Render x axis.
+        svg
+          .append("g")
+          .attr("transform", `translate(0, ${height})`)
+          // See https://github.com/d3/d3-time-format#locale_format for available formats.
+          .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%c")));
+
+        // Render y axis.
         svg.append("g").call(d3.axisLeft(y));
 
-        // Add dots
+        // Plot data.
         svg
           .append("g")
           .selectAll("dot")
@@ -72,8 +84,8 @@
           .attr("cy", function (d) {
             return y(d.concentration);
           })
-          .attr("r", 1.5)
-          .style("fill", "#69b3a2");
+          .attr("r", 5)
+          .style("fill", "#00000");
       });
     </script>
   </body>
