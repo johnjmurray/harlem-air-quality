@@ -55,12 +55,12 @@ class ConsumerThread(threading.Thread):
               startOfEpoch = False
               pulseDuration = 0
 
-          if value == 0:
+          if value == DUSTPIN_PARTICLES_DETECTED :
               pulseStart = timestamp
               isLow = True
               while isLow:
                   pulseStop, value = q.get()
-                  if value != 0:
+                  if value != DUSTPIN_PARTICLES_DETECTED :
                       isLow = False
               pulseDuration += pulseStop - pulseStart
 
