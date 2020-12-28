@@ -74,9 +74,6 @@ class ConsumerThread(threading.Thread):
               row = f"{t0},{pulseDuration},{epochDuration},{concentration}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
-              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDuration:0.2f} s"
-              print(msg)
-
 
 def getConcentration(x: float) -> float:
     """Get concentration from ratio using equation from test results."""
