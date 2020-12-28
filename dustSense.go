@@ -1,7 +1,7 @@
 // Record concentration of dust particles in the air over time.
 //
 // Compile:
-//   GOARM=6 GOARCH=arm go build -o dust-linux-armv6 .
+//   GOOS=linux GOARCH=arm GOARM=6 go build -o dust-linux-armv6 .
 //
 // See here for more info: https://github.com/golang/go/wiki/GoArm
 
@@ -12,14 +12,16 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
-	"math/rand"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
+
+	"github.com/stianeikeland/go-rpio/v4"
 )
 
-const dustPinInput = 2
+// TODO: make these things command-line arguments.
+const dustPinInput = rpio.Pin(2)
 const dustPinParticlesDetected = 0
 const sampleDuration = 5 * time.Second
 const dataPath = "data-go.csv"
@@ -28,10 +30,16 @@ const channelBuffer = 64 // TODO: what should this be?
 
 func main() {
 
+	if err := rpio.Open(); err != nil {
+		log.Fatalf(fmt.Sprint("unable to open gpio", err.Error()))
+	}
+	defer rpio.Close()
+	dustPinInput.Input()
+
 	prepareSpreadsheet()
 
-	ct := make(chan int64, channelBuffer) // timestamps
-	cv := make(chan int, channelBuffer)   // pin values
+	ct := make(chan int64, channelBuffer)      // timestamps
+	cv := make(chan rpio.State, channelBuffer) // pin values
 	defer close(ct)
 	defer close(cv)
 
@@ -48,22 +56,17 @@ func main() {
 }
 
 // produce pushes timestamps to channel `ct` and pin values to channel `cv`.
-func produce(ct chan int64, cv chan int, wg *sync.WaitGroup) {
-	ticker := time.NewTicker(time.Millisecond * 100)
-	defer ticker.Stop()
+func produce(ct chan int64, cv chan rpio.State, wg *sync.WaitGroup) {
 	defer wg.Done()
-	r := rand.New(rand.NewSource(42))
-	for _ = range ticker.C {
-		timestamp := time.Now().UnixNano()
-		value := r.Intn(2)
-		ct <- timestamp
-		cv <- value
+	for {
+		cv <- dustPinInput.Read()
+		ct <- time.Now().UnixNano()
 	}
 }
 
 // consume receives timestamps from channel `ct` and pin values from channel `cv`.
 // These values are then processed and saved to a spreadsheet.
-func consume(ct chan int64, cv chan int, wg *sync.WaitGroup) {
+func consume(ct chan int64, cv chan rpio.State, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	startOfEpoch := true
@@ -183,8 +186,6 @@ func (s *Sample) String() string {
 // Sample.appendToSpreadsheet appends one line of data to the spreadsheet.
 // Adapted from https://golang.org/pkg/os/#example_OpenFile_append.
 func (s *Sample) appendToSpreadsheet() {
-
-	fmt.Printf(s.String())
 
 	f, err := os.OpenFile(dataPath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
