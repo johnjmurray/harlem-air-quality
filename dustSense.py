@@ -1,11 +1,9 @@
+
 """Record the concentration of air particles over time.
-
 Saves data to a file with this format...
-
 timestamp,particlesDetectedDuration,sampleDuration,concentration
 11000,15,30,129
 11030,5,30,100
-
 Descriptions of columns:
   - time: Unix (epoch) timestamps. This corresponds to the START of the sample.
   - particlesDetectedDuration: duration during sampleDuration that particles were detected.
@@ -22,7 +20,7 @@ import time
 from typing import NamedTuple
 import RPi.GPIO as GPIO
 import queue
-
+import logging
 
 
 DUSTPIN_INPUT = 2
@@ -34,7 +32,7 @@ DATA_COMMIT_AND_PUSH_INTERVAL = 10 * 60  # seconds
 logging.basicConfig(level=logging.DEBUG,format='(%(threadName)-9s) %(message)s',)
 
 BUF_SIZE = 0 # infinite queue size
-q = Queue.Queue(BUF_SIZE)
+q = queue.Queue(BUF_SIZE)
 
 class ProducerThread(threading.Thread):
     def run(self):
@@ -43,15 +41,15 @@ class ProducerThread(threading.Thread):
         while True:
             sample = (time.time(), GPIO.input(DUSTPIN_INPUT))
             q.put(sample)
-            
+
 class ConsumerThread(threading.Thread):
     def run(self):
       startOfEpoch = True
       epochDuration = 0
 
       while True:
-          timestamp, value = q.get(block=False)  # block=False for debugging only
-          
+          timestamp, value = q.get()
+
           if startOfEpoch:
               t0 = timestamp
               startOfEpoch = False
@@ -61,73 +59,24 @@ class ConsumerThread(threading.Thread):
               pulseStart = timestamp
               isLow = True
               while isLow:
-                  pulseStop, value = q.get(block=False)
+                  pulseStop, value = q.get()
                   if value != 0:
                       isLow = False
               pulseDuration += pulseStop - pulseStart
 
           epochDuration = timestamp - t0
-          
+
           if epochDuration > 30:
               startOfEpoch = True
               pulseRatio = pulseDuration/epochDuration
               concentration = getConcentration(pulseRatio)
               # Save sample to file.
-          row = f"{sample.sampleStart},{sample.particlesDetectedDuration},{sample.sampleDuration},{concentration}\n"
-          with DATA_FILEPATH.open("a") as f:
-            f.write(row)
-          msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {sample.sampleDuration:0.2f} s"
-          print(msg)
-          
-          
-class Sample(NamedTuple):
-    """This object represents one sample of data.
-
-    Properties
-    ----------
-    particlesDetectedDuration : float
-        Duration (s) during sampleDuration that particles were detected.
-    sampleDuration : float
-        Duration (s) of this sample.
-    sampleStart : float
-        Unix timestamp of the beginning of this sample.
-    """
-
-    particlesDetectedDuration: float
-    sampleDuration: float
-    sampleStart: float
-
-
-def getOneSample(duration: float) -> Sample:
-    """Detect particles over `duration` seconds.
-
-    Parameters
-    ----------
-    duration : int, float
-        Duration of the sample.
-
-    Returns
-    -------
-    Instance of `Sample`.
-    """
-    particlesDetectedDuration = 0
-    sampleStart = time.time()
-    while (time.time() - sampleStart) < duration:
-        pulseStart = time.time()
-        pulseStop = pulseStart
-        while (
-            GPIO.input(DUSTPIN_INPUT) == DUSTPIN_PARTICLES_DETECTED
-            and (time.time() - sampleStart) < duration
-        ):
-            pulseStop = time.time()
-        particlesDetectedDuration += pulseStop - pulseStart
-
-    sampleDuration = time.time() - sampleStart
-    return Sample(
-        sampleDuration=sampleDuration,
-        particlesDetectedDuration=particlesDetectedDuration,
-        sampleStart=sampleStart,
-    )
+              row = f"{t0},{pulseDuration},{epochDuration},{concentration}\n"
+              with DATA_FILEPATH.open("a") as f:
+                f.write(row)
+              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDurat
+ion:0.2f} s"
+              print(msg)
 
 
 def getConcentration(x: float) -> float:
@@ -137,10 +86,8 @@ def getConcentration(x: float) -> float:
 
 def commitAndPushData(period: float) -> None:
     """Commit and push spreadsheet periodically.
-
     This function is meant to be run in a separate thread to avoid interfering with
     data collection.
-
     Parameters
     ----------
     period : float
@@ -157,16 +104,13 @@ def commitAndPushData(period: float) -> None:
 
 def main() -> None:
 
-    
-    
-
     # If the file does not exist, create it and write column names.
     if not DATA_FILEPATH.exists():
         DATA_FILEPATH.parent.mkdir(parents=True, exist_ok=True)
         DATA_FILEPATH.write_text(
             "timestamp,particlesDetectedDuration,sampleDuration,concentration\n"
         )
-        
+
     p = ProducerThread(name='producer')
     c = ConsumerThread(name='consumer')
 
@@ -174,7 +118,7 @@ def main() -> None:
     time.sleep(2)
     c.start()
     time.sleep(2)
-    
+
     # Run the data uploading pieces in a separate thread.
     dataUploadThread = threading.Thread(
         target=commitAndPushData,
