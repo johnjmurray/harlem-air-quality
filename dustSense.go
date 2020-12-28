@@ -9,7 +9,7 @@ Compile:
 	-o dust-linux-armv6 .
 
 See here for more info: https://github.com/golang/go/wiki/GoArm
- */
+*/
 
 package main
 
