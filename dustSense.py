@@ -74,7 +74,7 @@ class ConsumerThread(threading.Thread):
               row = f"{t0},{pulseDuration},{epochDuration},{concentration}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
-              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDuraion:0.2f} s"
+              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDuration:0.2f} s"
               print(msg)
 
 
@@ -96,6 +96,7 @@ def commitAndPushData(period: float) -> None:
     startTime = time.time()
     while True:
         time.sleep(period - ((time.time() - startTime) % period))
+        subprocess.run(["git", "pull"])
         subprocess.run(["git", "add", str(DATA_FILEPATH)])
         subprocess.run(["git", "commit", "-m", "added rows"])
         subprocess.run(["git", "push"])
