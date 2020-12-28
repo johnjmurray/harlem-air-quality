@@ -66,7 +66,7 @@ class ConsumerThread(threading.Thread):
 
           epochDuration = timestamp - t0
 
-          if epochDuration > 30:
+          if epochDuration > SAMPLE_DURATION:
               startOfEpoch = True
               pulseRatio = pulseDuration/epochDuration
               concentration = getConcentration(pulseRatio)
