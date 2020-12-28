@@ -36,6 +36,7 @@ func main() {
 	flag.DurationVar(&sampleDuration, "sample-duration", 5*time.Minute, "duration of one sample")
 	flag.DurationVar(&dataCommitAndPushInterval, "push-interval", 10*time.Minute, "time between pushes to GitHub")
 	flag.IntVar(&channelBuffer, "buffer-size", 64, "buffer size for each channel (ie queue)")
+	flag.Parse()
 
 	if err := rpio.Open(); err != nil {
 		log.Fatalf(fmt.Sprint("unable to open gpio", err.Error()))
