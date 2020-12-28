@@ -33,7 +33,7 @@ var channelBuffer int
 func main() {
 
 	flag.StringVar(&dataPath, "data-path", "data-go.csv", "path to CSV in which to save data")
-	flag.DurationVar(&sampleDuration, "sample-duration", 30*time.Second, "duration of one sample")
+	flag.DurationVar(&sampleDuration, "sample-duration", 5*time.Minute, "duration of one sample")
 	flag.DurationVar(&dataCommitAndPushInterval, "push-interval", 10*time.Minute, "time between pushes to GitHub")
 	flag.IntVar(&channelBuffer, "buffer-size", 64, "buffer size for each channel (ie queue)")
 
