@@ -74,8 +74,7 @@ class ConsumerThread(threading.Thread):
               row = f"{t0},{pulseDuration},{epochDuration},{concentration}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
-              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDurat
-ion:0.2f} s"
+              msg = f"{datetime.now()} | concentration: {concentration:0.2f} pcs/283mL | sample duration: {epochDuraion:0.2f} s"
               print(msg)
 
 
