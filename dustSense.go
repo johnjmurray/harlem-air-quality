@@ -1,9 +1,15 @@
-// Record concentration of dust particles in the air over time.
-//
-// Compile:
-//   GOOS=linux GOARCH=arm GOARM=6 go build -o dust-linux-armv6 .
-//
-// See here for more info: https://github.com/golang/go/wiki/GoArm
+/*
+Record concentration of dust particles in the air over time.
+
+Compile:
+
+  GOOS=linux GOARCH=arm GOARM=6 \
+	go build \
+	-ldflags "-X 'main.version=$(git describe)' -X 'main.buildTime=$(date)' -X 'main.goVersion=$(go version)'" \
+	-o dust-linux-armv6 .
+
+See here for more info: https://github.com/golang/go/wiki/GoArm
+ */
 
 package main
 
@@ -30,13 +36,24 @@ var dataPath string
 var dataCommitAndPushInterval time.Duration
 var channelBuffer int
 
+var showVersion bool
+var version string
+var buildTime string
+var goVersion string
+
 func main() {
 
 	flag.StringVar(&dataPath, "data-path", "data-go.csv", "path to CSV in which to save data")
 	flag.DurationVar(&sampleDuration, "sample-duration", 5*time.Minute, "duration of one sample")
 	flag.DurationVar(&dataCommitAndPushInterval, "push-interval", 10*time.Minute, "time between pushes to GitHub")
 	flag.IntVar(&channelBuffer, "buffer-size", 64, "buffer size for each channel (ie queue)")
+	flag.BoolVar(&showVersion, "version", false, "print version info")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("dust version %s\ncompiled on %s\nusing %s\n", version, buildTime, goVersion)
+		os.Exit(0)
+	}
 
 	if err := rpio.Open(); err != nil {
 		log.Fatalf(fmt.Sprint("unable to open gpio", err.Error()))
