@@ -25,7 +25,7 @@ import logging
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
-SAMPLE_DURATION = 30  # seconds
+SAMPLE_DURATION = 300  # seconds
 DATA_FILEPATH = Path("data.csv")
 DATA_COMMIT_AND_PUSH_INTERVAL = 10 * 60  # seconds
 
@@ -71,7 +71,7 @@ class ConsumerThread(threading.Thread):
               pulseRatio = pulseDuration/epochDuration
               concentration = getConcentration(pulseRatio)
               # Save sample to file.
-              row = f"{t0},{pulseDuration},{epochDuration},{concentration}\n"
+              row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:0.3f}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
 
