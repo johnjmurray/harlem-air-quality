@@ -8,6 +8,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -22,13 +23,19 @@ import (
 
 // TODO: make these things command-line arguments.
 const dustPinInput = rpio.Pin(2)
-const dustPinParticlesDetected = 0
-const sampleDuration = 5 * time.Second
-const dataPath = "data-go.csv"
-const dataCommitAndPushInterval = 10 * time.Minute
-const channelBuffer = 64 // TODO: what should this be?
+const dustPinParticlesDetected = rpio.Low
+
+var sampleDuration time.Duration
+var dataPath string
+var dataCommitAndPushInterval time.Duration
+var channelBuffer int
 
 func main() {
+
+	flag.StringVar(&dataPath, "data-path", "data-go.csv", "path to CSV in which to save data")
+	flag.DurationVar(&sampleDuration, "sample-duration", 30*time.Second, "duration of one sample")
+	flag.DurationVar(&dataCommitAndPushInterval, "push-interval", 10*time.Minute, "time between pushes to GitHub")
+	flag.IntVar(&channelBuffer, "buffer-size", 64, "buffer size for each channel (ie queue)")
 
 	if err := rpio.Open(); err != nil {
 		log.Fatalf(fmt.Sprint("unable to open gpio", err.Error()))
@@ -52,7 +59,6 @@ func main() {
 
 	// Block until goroutines in WaitGroup are done.
 	wg.Wait()
-
 }
 
 // produce pushes timestamps to channel `ct` and pin values to channel `cv`.
@@ -112,7 +118,6 @@ func consume(ct chan int64, cv chan rpio.State, wg *sync.WaitGroup) {
 			pulseRatio = sample.particlesDetectedDuration / sample.duration
 			concentration = getConcentration(pulseRatio)
 			sample.concentration = concentration
-			log.Printf("epoch duration: %.3f", sample.duration)
 			sample.appendToSpreadsheet()
 		}
 	}
@@ -161,6 +166,11 @@ func getConcentration(ratio float64) float64 {
 	return 1.1*math.Pow(ratio, 3) - 3.8*math.Pow(ratio, 2) + 520*ratio + 0.62
 }
 
+// nanoSecondsToSeconds converts nanoseconds to seconds.
+func nanoSecondsToSeconds(nano int64) float64 {
+	return float64(nano) / math.Pow(10, 9)
+}
+
 // Sample represents one sample of data.
 type Sample struct {
 	// Epoch time in seconds.
@@ -173,11 +183,6 @@ type Sample struct {
 	concentration float64
 }
 
-// nanoSecondsToSeconds converts nanoseconds to seconds.
-func nanoSecondsToSeconds(nano int64) float64 {
-	return float64(nano) / math.Pow(10, 9)
-}
-
 // Sample.String() returns the string representation of the Sample in CSV format.
 func (s *Sample) String() string {
 	return fmt.Sprintf("%.3f,%.3f,%.3f,%.3f\n", s.timestamp, s.particlesDetectedDuration, s.duration, s.concentration)
@@ -186,7 +191,6 @@ func (s *Sample) String() string {
 // Sample.appendToSpreadsheet appends one line of data to the spreadsheet.
 // Adapted from https://golang.org/pkg/os/#example_OpenFile_append.
 func (s *Sample) appendToSpreadsheet() {
-
 	f, err := os.OpenFile(dataPath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("failed to open spreadsheet: %v\n", err)
@@ -198,5 +202,4 @@ func (s *Sample) appendToSpreadsheet() {
 	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
-
 }
