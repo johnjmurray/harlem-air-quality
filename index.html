@@ -66,7 +66,7 @@
           .append("g")
           .attr("transform", `translate(0, ${height})`)
           // See https://github.com/d3/d3-time-format#locale_format for available formats.
-          .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%j")));
+          .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%x")));
 
         // Render y axis.
         svg.append("g").call(d3.axisLeft(y));
