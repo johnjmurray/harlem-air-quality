@@ -77,7 +77,7 @@ class ConsumerThread(threading.Thread):
 
 def getConcentration(x: float) -> float:
     """Get concentration from ratio using equation from test results."""
-    return (1.1 * x ** 3) - (3.8 * x ** 2) + (520 * x) + 0.62
+    return (1004388 * x ** 3) - (28273 * x ** 2) + (51483 * x) - 5.46
 
 
 def commitAndPushData(period: float) -> None:
