@@ -71,7 +71,7 @@ class ConsumerThread(threading.Thread):
               pulseRatio = pulseDuration/epochDuration
               concentration = getConcentration(pulseRatio)
               # Save sample to file.
-              row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:0.3f}\n"
+              row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:i}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
 
