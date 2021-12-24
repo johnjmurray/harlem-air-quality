@@ -1,4 +1,4 @@
-timestamp,particlesDetectedDuration,sampleDuration,concentration (particles/ft^3)
+timestamp,particlesDetectedDuration,sampleDuration,concentration
 1637183206.977,0,300,0
 1637183506.978,0,300.001,0
 1637183806.979,0,300,0
