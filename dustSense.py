@@ -23,7 +23,8 @@ import queue
 import logging
 import pandas
 from bokeh.plotting import figure
-from bokeh.io import output_file, save
+from bokeh.io import output_file, save, curdoc
+
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
@@ -81,11 +82,12 @@ def updatePlot():
     df = pandas.read_csv("data.csv")
     x = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     y = df["concentration"]
-    output_file("plot.html")
-    fig1 = figure(title=r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$",height=400,x_axis_type='datetime')
+    output_file("index.html")
+    fig1 = figure(height=300,x_axis_type='datetime')
+    fig1.xaxis.axis_label = r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$"
     fig1.scatter(x,y)
+    curdoc().theme = 'dark_minimal'
     fig1.sizing_mode = 'scale_width'
-    print(x[0])
     save(fig1)
 
 def getConcentration(x: float) -> float:
