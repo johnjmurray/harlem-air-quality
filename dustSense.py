@@ -27,7 +27,7 @@ DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
 SAMPLE_DURATION = 300  # seconds
 DATA_FILEPATH = Path("data.csv")
-DATA_COMMIT_AND_PUSH_INTERVAL = 10 * 60  # seconds
+DATA_COMMIT_AND_PUSH_INTERVAL =  3600 # seconds
 
 logging.basicConfig(level=logging.DEBUG,format='(%(threadName)-9s) %(message)s',)
 
