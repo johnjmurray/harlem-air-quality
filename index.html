@@ -69,7 +69,8 @@
           .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%x")));
 
         // Render y axis.
-        svg.append("g").call(d3.axisLeft(y));
+        svg.append("g")
+          .call(d3.axisLeft(y).tickFormat(d3.format(".1e")));
 
         // Plot data.
         svg
