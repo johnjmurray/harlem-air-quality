@@ -79,10 +79,10 @@ class ConsumerThread(threading.Thread):
 
 def updatePlot():
     df = pandas.read_csv("data.csv")
-    x = [datetime.fromtimestamp(ts/1000.) for ts in df["timestamp"]]
+    x = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     y = df["concentration"]
     output_file("plot.html")
-    fig1 = figure(title=r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$",height=400)
+    fig1 = figure(title=r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$",height=400,x_axis_type='datetime')
     fig1.scatter(x,y)
     fig1.sizing_mode = 'scale_width'
     print(x[0])
