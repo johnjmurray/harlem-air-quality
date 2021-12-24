@@ -76,15 +76,15 @@ class ConsumerThread(threading.Thread):
               row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:d}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
-              updatePlot()
 
 def updatePlot():
     df = pandas.read_csv("data.csv")
-    x = df["timestamp"]
+    x = [datetime.fromtimestamp(ts/1000.) for ts in df["timestamp"]]
     y = df["concentration"]
     output_file("plot.html")
-    fig1 = figure()
+    fig1 = figure(title=r"$$Particle (> 1 \mum) counts per ft^3$$")
     fig1.scatter(x,y)
+    fig1.sizing_mode = 'scale_width'
     save(fig1)
 
 def getConcentration(x: float) -> float:
@@ -112,6 +112,7 @@ def commitAndPushData(period: float) -> None:
         subprocess.run(["git", "add", str(DATA_FILEPATH)])
         subprocess.run(["git", "commit", "-m", "added rows"])
         subprocess.run(["git", "push"])
+        updatePlot()
 
 
 def main() -> None:
