@@ -82,9 +82,10 @@ def updatePlot():
     x = [datetime.fromtimestamp(ts/1000.) for ts in df["timestamp"]]
     y = df["concentration"]
     output_file("plot.html")
-    fig1 = figure(title=r"$$Particle (> 1 \mum) counts per ft^3$$")
+    fig1 = figure(title=r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$",height=400)
     fig1.scatter(x,y)
     fig1.sizing_mode = 'scale_width'
+    print(x[0])
     save(fig1)
 
 def getConcentration(x: float) -> float:
