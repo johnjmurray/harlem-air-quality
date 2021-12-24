@@ -62,6 +62,10 @@
           .nice();
 
         // Render x axis.
+        svg.append("rect")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("fill", "black");
         svg
           .append("g")
           .attr("transform", `translate(0, ${height})`)
@@ -92,7 +96,7 @@
             return y(d.concentration);
           })
           .attr("r", 1)
-          .style("fill", "#00000");
+          .style("fill", "#FFFFF");
       });
     </script>
   </body>
