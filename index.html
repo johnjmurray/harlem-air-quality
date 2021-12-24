@@ -67,18 +67,16 @@
       //   - https://gramener.github.io/d3js-playbook/scatter.html
 
       // set the dimensions and margins of the graph
-      //const margin = { top: 25, right: 20, bottom: 45, left: 60 },
-      //  height = 600,
-      //  width = 954;
+      const margin = { top: 25, right: 20, bottom: 45, left: 60 },
+        height = 600,
+        width = 954;
 
       // append the svg object to the body of the page
       const svg = d3
         .select("#plot")
         .append("svg")
-        //.attr("width", width + margin.left + margin.right)
-        //.attr("height", height + margin.top + margin.bottom)
-        .attr("width",80%)
-        .attr("height",50%")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", `translate(${margin.left}, ${margin.top})`)
         .call(responsivefy);
