@@ -21,7 +21,9 @@ from typing import NamedTuple
 import RPi.GPIO as GPIO
 import queue
 import logging
-
+import pandas
+from bokeh.plotting import figure
+from bokeh.io import output_file, save
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
@@ -69,11 +71,21 @@ class ConsumerThread(threading.Thread):
           if epochDuration > SAMPLE_DURATION:
               startOfEpoch = True
               pulseRatio = pulseDuration/epochDuration
-              concentration = getConcentration(pulseRatio)
+              concentration = int(getConcentration(pulseRatio))
               # Save sample to file.
-              row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:i}\n"
+              row = f"{t0:0.3f},{pulseDuration:0.3f},{epochDuration:0.3f},{concentration:d}\n"
               with DATA_FILEPATH.open("a") as f:
                 f.write(row)
+              updatePlot()
+
+def updatePlot():
+    df = pandas.read_csv("data.csv")
+    x = df["timestamp"]
+    y = df["concentration"]
+    output_file("plot.html")
+    fig1 = figure()
+    fig1.scatter(x,y)
+    save(fig1)
 
 def getConcentration(x: float) -> float:
     """Get concentration from ratio using equation from test results. 
