@@ -71,7 +71,13 @@
         // Render y axis.
         svg.append("g")
           .call(d3.axisLeft(y).tickFormat(d3.format(".1e")));
-
+        svg.append("text")
+          .attr("class", "y label")
+          .attr("text-anchor", "end")
+          .attr("y", 6)
+          .attr("dy", ".75em")
+          .attr("transform", "rotate(-90)")
+          .text("Particles > 1 μm, counts / ft^3");
         // Plot data.
         svg
           .append("g")
