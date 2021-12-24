@@ -70,7 +70,7 @@
 
         // Render y axis.
         svg.append("g")
-          .call(d3.axisLeft(y).tickFormat(d3.format(".1e")));
+          .call(d3.axisLeft(y));
         svg.append("text")
           .attr("class", "y label")
           .attr("text-anchor", "end")
