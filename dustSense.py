@@ -84,7 +84,7 @@ def updatePlot():
     y = df["concentration"]
     output_file("index.html")
     fig1 = figure(x_axis_type='datetime', title="Concentration of airborne particulate at Saint Nicholas Park, NYC")
-    fig1.yaxis.axis_label ="Particle (>1 "+r"$$ \mu $$"+"m) counts per "+r"$$ ft^{3}$$"
+    fig1.yaxis.axis_label =r"Particle(>1 $$ \mu $$ m) counts per $$ ft^{3}$$"
     fig1.scatter(x,y)
     fig1.sizing_mode = 'stretch_both'
     save(fig1)
