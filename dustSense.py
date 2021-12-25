@@ -24,7 +24,7 @@ import logging
 import pandas
 from bokeh.plotting import figure
 from bokeh.io import output_file, save, curdoc
-from bokeh.models import HoverTool
+from bokeh.models import HoverTool, DatetimeTickFormatter
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
@@ -91,10 +91,13 @@ def updatePlot():
     fig1.xaxis.axis_label_text_font_size = '12pt'
     fig1.xaxis.major_label_text_font_size = '10pt'
     fig1.background_fill_color = 'beige'
+    fig1.xaxis.formatter=DatetimeTickFormatter(days="%m/%d",hours="%H",minutes="%H:%M")
     fig1.background_fill_alpha = 0.5
-    cr = fig1.scatter(x,y,size=1,fill_color='black',hover_fill_color="firebrick",line_color='black',hover_line_color=None)
+    cr = fig1.circle(x,y,size=5,fill_color='black',hover_fill_color="firebrick",line_color='black',hover_line_color=None)
     fig1.add_tools(HoverTool(tooltips=None, renderers=[cr], mode='hline'))
     fig1.sizing_mode = 'stretch_both'
+    curdoc().add_root(fig1)
+    curdoc().title = "Harlem Air Quality"
     save(fig1)
 
 def getConcentration(x: float) -> float:
