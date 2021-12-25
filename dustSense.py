@@ -83,11 +83,10 @@ def updatePlot():
     x = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     y = df["concentration"]
     output_file("index.html")
-    fig1 = figure(height=300,x_axis_type='datetime')
-    fig1.xaxis.axis_label = r"$$\color{black} Particle (> 1 \mum) counts per ft^{3}$$"
+    fig1 = figure(x_axis_type='datetime', title="Concentration of airborne particulate at Saint Nicholas Park, NYC")
+    fig1.yaxis.axis_label ="Particle (>1 "+r"$$ \mu $$"+"m) counts per "+r"$$ ft^{3}$$"
     fig1.scatter(x,y)
-    curdoc().theme = 'dark_minimal'
-    fig1.sizing_mode = 'scale_width'
+    fig1.sizing_mode = 'stretch_both'
     save(fig1)
 
 def getConcentration(x: float) -> float:
