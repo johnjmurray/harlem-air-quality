@@ -92,7 +92,7 @@ def updatePlot():
     fig1.xaxis.major_label_text_font_size = '10pt'
     fig1.background_fill_color = 'beige'
     fig1.xaxis.formatter=DatetimeTickFormatter(days="%m/%d",hours="%H:%M",minutes="%H:%M")
-    fig1.yaxis.BasicTickFormatter(precision=1)
+    fig1.yaxis.formatter=BasicTickFormatter(precision=1)
     fig1.background_fill_alpha = 0.5
     cr = fig1.circle(x,y,size=3,fill_color='black',hover_fill_color="firebrick",line_color='black',hover_line_color=None)
     fig1.add_tools(HoverTool(tooltips=None, renderers=[cr], mode='hline'))
