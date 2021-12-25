@@ -24,7 +24,7 @@ import logging
 import pandas
 from bokeh.plotting import figure
 from bokeh.io import output_file, save, curdoc
-
+from bokeh.models import HoverTool
 
 DUSTPIN_INPUT = 2
 DUSTPIN_PARTICLES_DETECTED = 0
@@ -84,14 +84,16 @@ def updatePlot():
     y = df["concentration"]
     output_file("index.html")
     fig1 = figure(toolbar_location='above',x_axis_type='datetime', title="Concentration of airborne particulate at Saint Nicholas Park, NYC")
-    fig1.yaxis.axis_label =r"$$ Particle \quad (>1 \quad \mu  m) \quad  counts/ ft^{3}$$"
+    fig1.title.text_font_size = '12pt'
+    fig1.yaxis.axis_label =r"$$ Particle \  (>1 \  \mu  m) \   counts/ ft^{3}$$"
     fig1.yaxis.axis_label_text_font_size = '12pt'
     fig1.yaxis.major_label_text_font_size = '10pt'
     fig1.xaxis.axis_label_text_font_size = '12pt'
     fig1.xaxis.major_label_text_font_size = '10pt'
     fig1.background_fill_color = 'beige'
     fig1.background_fill_alpha = 0.5
-    fig1.scatter(x,y)
+    cr = fig1.scatter(x,y,size=1,fill_color='black',hover_fill_color="firebrick",line_color='black',hover_line_color=None)
+    fig1.add_tools(HoverTool(tooltips=None, renderers=[cr], mode='hline'))
     fig1.sizing_mode = 'stretch_both'
     save(fig1)
 
