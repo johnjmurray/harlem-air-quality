@@ -83,8 +83,14 @@ def updatePlot():
     x = [datetime.fromtimestamp(ts) for ts in df["timestamp"]]
     y = df["concentration"]
     output_file("index.html")
-    fig1 = figure(x_axis_type='datetime', title="Concentration of airborne particulate at Saint Nicholas Park, NYC")
-    fig1.yaxis.axis_label =r"Particle(>1 $$ \mu $$ m) counts per $$ ft^{3}$$"
+    fig1 = figure(toolbar_location='above',x_axis_type='datetime', title="Concentration of airborne particulate at Saint Nicholas Park, NYC")
+    fig1.yaxis.axis_label =r"$$ Particle \quad (>1 \quad \mu  m) \quad  counts/ ft^{3}$$"
+    fig1.yaxis.axis_label_text_font_size = '12pt'
+    fig1.yaxis.major_label_text_font_size = '10pt'
+    fig1.xaxis.axis_label_text_font_size = '12pt'
+    fig1.xaxis.major_label_text_font_size = '10pt'
+    fig1.background_fill_color = 'beige'
+    fig1.background_fill_alpha = 0.5
     fig1.scatter(x,y)
     fig1.sizing_mode = 'stretch_both'
     save(fig1)
